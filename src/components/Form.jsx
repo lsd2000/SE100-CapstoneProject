@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect, useCallback } from "react";
-import StockContext from '../StockContext';
-import Papa from 'papaparse';
+import StockContext from "../StockContext";
+import Papa from "papaparse";
 
 // Next day task is to add form conditions to check
 // only string value for stock symbol. recommendations for stock symbols
@@ -19,52 +19,59 @@ const Form = () => {
 
   useEffect(() => {
     // Load and parse the CSV file
-    fetch('/listing_status.csv') 
-      .then(response => response.text())
-      .then(csvString => {
+    //fetch('/listing_status.csv')
+    const csvFileUrl = "/SE100-CapstoneProject/listing_status.csv";
+    fetch(csvFileUrl)
+      .then((response) => response.text())
+      .then((csvString) => {
         Papa.parse(csvString, {
           header: true,
           complete: (results) => {
-            setSuggestions(results.data.map(item => item.symbol));
-          }
+            setSuggestions(results.data.map((item) => item.symbol));
+          },
         });
-      }
-      );
+      });
   }, []);
 
   // Access the setSubmittedData function from the context
   const { setSubmittedData } = useContext(StockContext);
 
-  const validateField = useCallback((name, value) => {
-    let errorMsg = "";
-    if (name === "stocksymbol") {
-      if (!suggestions.includes(value.toUpperCase())) {
-        errorMsg = "Please enter a valid stock symbol.";
+  const validateField = useCallback(
+    (name, value) => {
+      let errorMsg = "";
+      if (name === "stocksymbol") {
+        if (!suggestions.includes(value.toUpperCase())) {
+          errorMsg = "Please enter a valid stock symbol.";
+        }
+      } else if (name === "quantity") {
+        if (!Number.isInteger(+value) || +value < 0) {
+          errorMsg = "Quantity must be a non-negative integer.";
+        }
+      } else if (name === "purchase_price") {
+        if (isNaN(value) || +value < 0) {
+          errorMsg = "Purchase price must be a non-negative number.";
+        }
       }
-    } else if (name === "quantity") {
-      if (!Number.isInteger(+value) || +value < 0) {
-        errorMsg = "Quantity must be a non-negative integer.";
-      }
-    } else if (name === "purchase_price") {
-      if (isNaN(value) || +value < 0) {
-        errorMsg = "Purchase price must be a non-negative number.";
-      }
-    }
-    return errorMsg;
-  }, [suggestions]);
+      return errorMsg;
+    },
+    [suggestions]
+  );
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    const error = validateField(name, value);
-    setErrors(prev => ({
-      ...prev,
-      [name]: error,
-    }));
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  }, [validateField]);
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      const error = validateField(name, value);
+      setErrors((prev) => ({
+        ...prev,
+        [name]: error,
+      }));
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    [validateField]
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -105,7 +112,9 @@ const Form = () => {
               onChange={handleChange}
               value={formData.stocksymbol}
             />
-            {errors.stocksymbol && <p className="text-red-500">{errors.stocksymbol}</p>}
+            {errors.stocksymbol && (
+              <p className="text-red-500">{errors.stocksymbol}</p>
+            )}
           </div>
           <div>
             <label
